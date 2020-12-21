@@ -29,6 +29,15 @@ extern uint16_t usb_config;
 
 #define CDCACM_PACKET_SIZE 64
 
+/* TODO: it looks cleaner to move the trace endpoint size definition
+ * to the platform.h files for different targets, because this definition
+ * must be kept in sync with the values used in the 'traceswo(async)' files. */
+#if defined(STM32F7)
+#define TRACE_ENDPOINT_SIZE	512
+#else
+#define TRACE_ENDPOINT_SIZE	64
+#endif
+
 #define CDCACM_GDB_ENDPOINT  1
 #define CDCACM_UART_ENDPOINT 3
 #define TRACE_ENDPOINT       5

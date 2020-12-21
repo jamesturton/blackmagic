@@ -51,7 +51,7 @@
 #include <libopencm3/cm3/cortex.h>
 #include <libopencm3/cm3/nvic.h>
 #include <libopencm3/usb/cdc.h>
-#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/dma.h>
 #endif
@@ -65,7 +65,7 @@ static void debug_serial_send_callback(usbd_device *dev, uint8_t ep);
 static void debug_serial_receive_callback(usbd_device *dev, uint8_t ep);
 #endif
 
-#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
 static bool debug_serial_send_complete = true;
 #endif
 
@@ -157,7 +157,7 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 	usb_config = value;
 
 	/* GDB interface */
-#if defined(STM32F4) || defined(LM4F)
+#if defined(STM32F4) || defined(LM4F) || defined(STM32F7)
 	usbd_ep_setup(dev, CDCACM_GDB_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, gdb_usb_out_cb);
 #else
 	usbd_ep_setup(dev, CDCACM_GDB_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, NULL);
@@ -173,7 +173,7 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 
 #ifdef PLATFORM_HAS_TRACESWO
 	/* Trace interface */
-	usbd_ep_setup(dev, TRACE_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, 64, trace_buf_drain);
+	usbd_ep_setup(dev, TRACE_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, TRACE_ENDPOINT_SIZE, trace_buf_drain);
 #endif
 
 	usbd_register_control_callback(dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
@@ -229,7 +229,7 @@ static bool debug_serial_fifo_buffer_empty(void)
 }
 #endif
 
-#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
 /*
  * Runs deferred processing for AUX serial RX, draining RX FIFO by sending
  * characters to host PC via the debug serial interface.
@@ -276,7 +276,7 @@ static void debug_serial_send_callback(usbd_device *dev, uint8_t ep)
 {
 	(void) ep;
 	(void) dev;
-#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
 	debug_serial_send_data();
 #endif
 }
@@ -297,7 +297,7 @@ static void debug_serial_receive_callback(usbd_device *dev, uint8_t ep)
 
 	aux_serial_send(len);
 
-#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4)
+#if defined(STM32F0) || defined(STM32F1) || defined(STM32F3) || defined(STM32F4) || defined(STM32F7)
 	/* Disable USBUART TX packet reception if buffer does not have enough space */
 	if (AUX_UART_BUFFER_SIZE - aux_serial_transmit_buffer_fullness() < CDCACM_PACKET_SIZE)
 		usbd_ep_nak_set(dev, ep, 1);
