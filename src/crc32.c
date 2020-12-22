@@ -101,6 +101,8 @@ static uint32_t crc32_calc(const uint32_t crc, const uint8_t data)
 	return (crc << 8U) ^ crc32_table[((crc >> 24U) ^ data) & 0xffU];
 }
 
+void crc32_init(void) {}
+
 bool generic_crc32(target_s *const t, uint32_t *const crc_res, uint32_t base, size_t len)
 {
 	uint32_t crc = 0xffffffffU;
@@ -141,7 +143,13 @@ bool generic_crc32(target_s *const t, uint32_t *const crc_res, uint32_t base, si
 	return true;
 }
 #else
+#include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/crc.h>
+
+void crc32_init(void)
+{
+	rcc_periph_clock_enable(RCC_CRC);
+}
 
 bool generic_crc32(target_s *const t, uint32_t *const crc_res, uint32_t base, size_t len)
 {

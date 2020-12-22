@@ -44,7 +44,6 @@ uint32_t detect_rev(void)
 	rcc_periph_clock_enable(RCC_USB);
 	rcc_periph_reset_pulse(RST_USB);
 	rcc_periph_clock_enable(RCC_AFIO);
-	rcc_periph_clock_enable(RCC_CRC);
 	/*
 	 * First, get the board revision by pulling PC13/14 up then reading them.
 	 * This gives us the following table of values for these pins:

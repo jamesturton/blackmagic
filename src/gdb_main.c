@@ -709,5 +709,6 @@ static void handle_z_packet(char *packet, const size_t plen)
 
 void gdb_main(void)
 {
+	crc32_init();
 	gdb_main_loop(&gdb_controller, false);
 }

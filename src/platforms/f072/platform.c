@@ -77,7 +77,6 @@ void platform_init(void)
 	/* Enable peripherals */
 	rcc_periph_clock_enable(RCC_GPIOA);
 	rcc_periph_clock_enable(RCC_GPIOB);
-	rcc_periph_clock_enable(RCC_CRC);
 	rcc_set_usbclk_source(RCC_PLL);
 
 	GPIOA_OSPEEDR &= ~0xf00cU;

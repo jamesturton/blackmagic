@@ -22,5 +22,6 @@
 #define INCLUDE_CRC32_H
 
 bool generic_crc32(target_s *t, uint32_t *crc, uint32_t base, int len);
+void crc32_init(void);
 
 #endif /* INCLUDE_CRC32_H */
