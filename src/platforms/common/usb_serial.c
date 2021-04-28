@@ -43,6 +43,10 @@
 #include "general.h"
 #include "gdb_if.h"
 #include "usb_serial.h"
+#if defined(PLATFORM_HAS_SLCAN)
+# undef PLATFORM_HAS_TRACESWO
+# define PLATFORM_HAS_TRACESWO
+#endif
 #ifdef PLATFORM_HAS_TRACESWO
 #include "traceswo.h"
 #endif
@@ -91,6 +95,10 @@ static enum usbd_request_return_codes gdb_serial_control_request(usbd_device *de
 	/* Is the request for the GDB UART interface? */
 	if (req->wIndex != GDB_IF_NO)
 		return USBD_REQ_NEXT_CALLBACK;
+#if defined(PLATFORM_HAS_SLCAN)
+	if (req->wIndex != SLCAN_IF_NO)
+		return USBD_REQ_NEXT_CALLBACK;
+#endif
 
 	switch (req->bRequest) {
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
@@ -117,6 +125,10 @@ static enum usbd_request_return_codes debug_serial_control_request(usbd_device *
 	/* Is the request for the physical/debug UART interface? */
 	if (req->wIndex != UART_IF_NO)
 		return USBD_REQ_NEXT_CALLBACK;
+#if defined(PLATFORM_HAS_SLCAN)
+	if (req->wIndex != SLCAN_IF_NO)
+		return USBD_REQ_NEXT_CALLBACK;
+#endif
 
 	switch (req->bRequest) {
 	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
@@ -137,6 +149,32 @@ static enum usbd_request_return_codes debug_serial_control_request(usbd_device *
 	return USBD_REQ_NOTSUPP;
 }
 
+#if defined(PLATFORM_HAS_SLCAN)
+static enum usbd_request_return_codes slcan_serial_control_request(usbd_device *dev, struct usb_setup_data *req,
+	uint8_t **buf, uint16_t *const len, void (**complete)(usbd_device *dev, struct usb_setup_data *req))
+{
+	(void)buf;
+	(void)complete;
+	/* Is the request for the GDB UART interface? */
+	if (req->wIndex != GDB_IF_NO)
+		return USBD_REQ_NEXT_CALLBACK;
+	if (req->wIndex != UART_IF_NO)
+		return USBD_REQ_NEXT_CALLBACK;
+
+	switch (req->bRequest) {
+	case USB_CDC_REQ_SET_CONTROL_LINE_STATE:
+		usb_serial_set_state(dev, req->wIndex, CDCACM_SLCAN_ENDPOINT);
+		gdb_serial_dtr = req->wValue & 1;
+		return USBD_REQ_HANDLED;
+	case USB_CDC_REQ_SET_LINE_CODING:
+		if (*len < sizeof(struct usb_cdc_line_coding))
+			return USBD_REQ_NOTSUPP;
+		return USBD_REQ_HANDLED; /* Ignore on GDB Port */
+	}
+	return USBD_REQ_NOTSUPP;
+}
+#endif
+
 void usb_serial_set_state(usbd_device *const dev, const uint16_t iface, const uint8_t ep)
 {
 	uint8_t buf[10];
@@ -151,6 +189,28 @@ void usb_serial_set_state(usbd_device *const dev, const uint16_t iface, const ui
 	buf[9] = 0U;
 	usbd_ep_write_packet(dev, ep, buf, sizeof(buf));
 }
+
+#if defined(PLATFORM_HAS_SLCAN)
+static volatile uint32_t count_new;
+static uint8_t double_buffer_out[CDCACM_PACKET_SIZE];
+static void slcan_usb_out_cb(usbd_device *dev, uint8_t ep)
+{
+	(void)ep;
+	usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 1);
+	count_new = usbd_ep_read_packet(dev, CDCACM_SLCAN_ENDPOINT,
+									double_buffer_out, CDCACM_PACKET_SIZE);
+	if (!count_new) {
+		usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 0);
+	}
+	usbd_ep_write_packet(dev, CDCACM_SLCAN_ENDPOINT, double_buffer_out, count_new);
+
+}
+static void slcan_usb_in_cb(usbd_device *dev, uint8_t ep)
+{
+	(void) ep;
+	(void) dev;
+}
+#endif
 
 void usb_serial_set_config(usbd_device *dev, uint16_t value)
 {
@@ -175,17 +235,30 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 	/* Trace interface */
 	usbd_ep_setup(dev, TRACE_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, TRACE_ENDPOINT_SIZE, trace_buf_drain);
 #endif
+#if defined(PLATFORM_HAS_SLCAN)
+	/* SLCAN interface */
+	usbd_ep_setup(dev, CDCACM_SLCAN_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, slcan_usb_out_cb);
+	usbd_ep_setup(dev, CDCACM_SLCAN_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, slcan_usb_in_cb);
+	usbd_ep_setup(dev, (CDCACM_SLCAN_ENDPOINT + 1) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
+#endif
 
 	usbd_register_control_callback(dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
 		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, debug_serial_control_request);
 	usbd_register_control_callback(dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
 		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, gdb_serial_control_request);
+#if defined(PLATFORM_HAS_SLCAN)
+	usbd_register_control_callback(dev, USB_REQ_TYPE_CLASS | USB_REQ_TYPE_INTERFACE,
+		USB_REQ_TYPE_TYPE | USB_REQ_TYPE_RECIPIENT, slcan_serial_control_request);
+#endif
 
 	/* Notify the host that DCD is asserted.
 	 * Allows the use of /dev/tty* devices on *BSD/MacOS
 	 */
 	usb_serial_set_state(dev, GDB_IF_NO, CDCACM_GDB_ENDPOINT);
 	usb_serial_set_state(dev, UART_IF_NO, CDCACM_UART_ENDPOINT);
+#if defined(PLATFORM_HAS_SLCAN)
+	usb_serial_set_state(dev, SLCAN_IF_NO, CDCACM_SLCAN_ENDPOINT);
+#endif
 
 #if defined(ENABLE_DEBUG) && defined(PLATFORM_HAS_DEBUG)
 	initialise_monitor_handles();

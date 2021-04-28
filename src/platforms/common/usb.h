@@ -40,14 +40,19 @@ extern uint16_t usb_config;
 # define TRACE_ENDPOINT_SIZE 64
 #endif
 
-#define CDCACM_GDB_ENDPOINT  1
-#define CDCACM_UART_ENDPOINT 3
-#define TRACE_ENDPOINT       5
+#define CDCACM_GDB_ENDPOINT   1
+#define CDCACM_UART_ENDPOINT  3
+#define TRACE_ENDPOINT        5
+#define CDCACM_SLCAN_ENDPOINT 6
 
 #define GDB_IF_NO  0
 #define UART_IF_NO 2
 #define DFU_IF_NO  4
-#ifdef PLATFORM_HAS_TRACESWO
+#if defined(PLATFORM_HAS_SLCAN)
+# define TRACE_IF_NO 5
+# define SLCAN_IF_NO 6
+# define TOTAL_INTERFACES  8
+#elif defined(PLATFORM_HAS_TRACESWO)
 #define TRACE_IF_NO      5
 #define TOTAL_INTERFACES 6
 #else
