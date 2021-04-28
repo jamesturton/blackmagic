@@ -199,9 +199,7 @@ static void slcan_usb_out_cb(usbd_device *dev, uint8_t ep)
 	usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 1);
 	count_new = usbd_ep_read_packet(dev, CDCACM_SLCAN_ENDPOINT,
 									double_buffer_out, CDCACM_PACKET_SIZE);
-	if (!count_new) {
-		usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 0);
-	}
+	usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 0);
 	usbd_ep_write_packet(dev, CDCACM_SLCAN_ENDPOINT, double_buffer_out, count_new);
 
 }
