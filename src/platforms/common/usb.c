@@ -31,7 +31,11 @@ usbd_device *usbdev = NULL;
 uint16_t usb_config;
 
 /* We need a special large control buffer for this device: */
+#if defined(PLATFORM_HAS_SLCAN)
+static uint8_t usbd_control_buffer[512];
+#else
 static uint8_t usbd_control_buffer[256];
+#endif
 
 void blackmagic_usb_init(void)
 {
