@@ -191,23 +191,7 @@ void usb_serial_set_state(usbd_device *const dev, const uint16_t iface, const ui
 }
 
 #if defined(PLATFORM_HAS_SLCAN)
-static volatile uint32_t count_new;
-static uint8_t double_buffer_out[CDCACM_PACKET_SIZE];
-static void slcan_usb_out_cb(usbd_device *dev, uint8_t ep)
-{
-	(void)ep;
-	usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 1);
-	count_new = usbd_ep_read_packet(dev, CDCACM_SLCAN_ENDPOINT,
-									double_buffer_out, CDCACM_PACKET_SIZE);
-	usbd_ep_nak_set(dev, CDCACM_SLCAN_ENDPOINT, 0);
-	usbd_ep_write_packet(dev, CDCACM_SLCAN_ENDPOINT, double_buffer_out, count_new);
-
-}
-static void slcan_usb_in_cb(usbd_device *dev, uint8_t ep)
-{
-	(void) ep;
-	(void) dev;
-}
+extern void slcan_usb_out_cb(usbd_device *dev, uint8_t ep);
 #endif
 
 void usb_serial_set_config(usbd_device *dev, uint16_t value)
@@ -236,7 +220,7 @@ void usb_serial_set_config(usbd_device *dev, uint16_t value)
 #if defined(PLATFORM_HAS_SLCAN)
 	/* SLCAN interface */
 	usbd_ep_setup(dev, CDCACM_SLCAN_ENDPOINT, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, slcan_usb_out_cb);
-	usbd_ep_setup(dev, CDCACM_SLCAN_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, slcan_usb_in_cb);
+	usbd_ep_setup(dev, CDCACM_SLCAN_ENDPOINT | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_BULK, CDCACM_PACKET_SIZE, NULL);
 	usbd_ep_setup(dev, (CDCACM_SLCAN_ENDPOINT + 1) | USB_REQ_TYPE_IN, USB_ENDPOINT_ATTR_INTERRUPT, 16, NULL);
 #endif
 
