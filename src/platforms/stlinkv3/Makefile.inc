@@ -32,6 +32,7 @@ VPATH += platforms/stm32
 
 SRC += 	\
 	serialno.c	\
+	stm32-slcan.c	\
 	timing.c	\
 	timing_stm32.c	\
 	traceswoasync_f723.c	\
