@@ -39,7 +39,7 @@ extern bool debug_bmp;
 #endif
 
 #define PLATFORM_HAS_USBUART
-#define PLATFORM_IDENT   "(STLINK/V2) "
+#define PLATFORM_IDENT   "(STLINK-V2) "
 
 /* Hardware definitions... */
 #define TDI_PORT	GPIOA
