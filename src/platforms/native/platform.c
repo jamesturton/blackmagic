@@ -39,6 +39,7 @@
 
 static void adc_init(void);
 static void setup_vbus_irq(void);
+static void setup_btn_irq(void);
 
 /* Starting with hardware version 4 we are storing the hardware version in the
  * flash option user Data1 byte.
@@ -173,6 +174,8 @@ void platform_init(void)
 	gpio_port_write(GPIOA, 0x8182);
 	gpio_port_write(GPIOB, 0x2002);
 
+	gpio_set_mode(AUX_BTN1_PORT, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, AUX_BTN1);
+
 	gpio_set_mode(LED_PORT, GPIO_MODE_OUTPUT_2_MHZ,
 			GPIO_CNF_OUTPUT_PUSHPULL,
 			LED_UART | LED_IDLE_RUN | LED_ERROR);
@@ -231,6 +234,7 @@ void platform_init(void)
 		usbuart_init();
 
 	setup_vbus_irq();
+	setup_btn_irq();
 }
 
 void platform_srst_set_val(bool assert)
@@ -345,6 +349,12 @@ void platform_request_boot(void)
 
 void exti15_10_isr(void)
 {
+	if (exti_get_flag_status(AUX_BTN1)) {
+		platform_srst_set_val((gpio_get(AUX_BTN1_PORT, AUX_BTN1) == 0));
+		exti_reset_request(AUX_BTN1);
+		return;
+	}
+
 	uint32_t usb_vbus_port;
 	uint16_t usb_vbus_pin;
 
@@ -397,4 +407,17 @@ static void setup_vbus_irq(void)
 	exti_enable_request(usb_vbus_pin);
 
 	exti15_10_isr();
+}
+
+static void setup_btn_irq(void)
+{
+    // IRQ is already enabled by USB_VBUS_IRQ
+
+    // Configure the EXTI subsystem
+    exti_select_source(AUX_BTN1, AUX_BTN1_PORT);
+
+    exti_set_trigger(AUX_BTN1, EXTI_TRIGGER_BOTH);
+
+    // Finally enable interrupt
+    exti_enable_request(AUX_BTN1);
 }
