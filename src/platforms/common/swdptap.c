@@ -24,6 +24,13 @@
 #include "timing.h"
 #include "adiv5.h"
 
+#if !defined(SWDIO_IN_PORT)
+# define SWDIO_IN_PORT SWDIO_PORT
+#endif
+#if !defined(SWDIO_IN_PIN)
+# define SWDIO_IN_PIN SWDIO_PIN
+#endif
+
 typedef enum swdio_status_e {
 	SWDIO_STATUS_FLOAT = 0,
 	SWDIO_STATUS_DRIVE
@@ -64,7 +71,7 @@ static uint32_t swdptap_seq_in_swd_delay(const size_t clock_cycles)
 {
 	uint32_t value = 0;
 	for (size_t cycle = 0; cycle < clock_cycles;) {
-		if (gpio_get(SWDIO_PORT, SWDIO_PIN))
+		if (gpio_get(SWDIO_IN_PORT, SWDIO_IN_PIN))
 			value |= (1U << cycle);
 		gpio_set(SWCLK_PORT, SWCLK_PIN);
 		for (volatile int32_t cnt = swd_delay_cnt - 2; cnt > 0; cnt--)
@@ -82,7 +89,7 @@ static uint32_t swdptap_seq_in_no_delay(const size_t clock_cycles)
 {
 	uint32_t value = 0;
 	for (size_t cycle = 0; cycle < clock_cycles;) {
-		if (gpio_get(SWDIO_PORT, SWDIO_PIN))
+		if (gpio_get(SWDIO_IN_PORT, SWDIO_IN_PIN))
 			value |= (1U << cycle);
 		gpio_set(SWCLK_PORT, SWCLK_PIN);
 		++cycle;
@@ -105,7 +112,7 @@ static bool swdptap_seq_in_parity(uint32_t *ret, size_t clock_cycles)
 	const uint32_t result = swdptap_seq_in(clock_cycles);
 
 	int parity = __builtin_popcount(result);
-	const bool bit = gpio_get(SWDIO_PORT, SWDIO_PIN);
+	const bool bit = gpio_get(SWDIO_IN_PORT, SWDIO_IN_PIN);
 	gpio_set(SWCLK_PORT, SWCLK_PIN);
 	for (volatile int32_t cnt = swd_delay_cnt - 2; cnt > 0; cnt--)
 		continue;

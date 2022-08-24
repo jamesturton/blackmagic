@@ -39,7 +39,10 @@ static const struct usb_device_descriptor dev_desc = {
 	.bDeviceClass = 0xEF, /* Miscellaneous Device */
 	.bDeviceSubClass = 2, /* Common Class */
 	.bDeviceProtocol = 1, /* Interface Association */
-#ifdef LM4F
+	/* The USB specification requires that the control endpoint size for high
+	 * speed devices (e.g., stlinkv3) is 64 bytes.
+	 * Best to have its size set to 64 bytes in all cases. */
+#if defined(LM4F) || defined(STM32F7)
 	.bMaxPacketSize0 = 64, /*Fixed for icdi*/
 #else
 	.bMaxPacketSize0 = 32,
@@ -64,7 +67,7 @@ static const struct usb_endpoint_descriptor gdb_comm_endp = {
 	.bEndpointAddress = (CDCACM_GDB_ENDPOINT + 1) | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
-	.bInterval = 255,
+	.bInterval = MAX_BINTERVAL,
 };
 
 static const struct usb_endpoint_descriptor gdb_data_endp[] = {
@@ -127,7 +130,7 @@ static const struct {
 static const struct usb_interface_descriptor gdb_comm_iface = {
 	.bLength = USB_DT_INTERFACE_SIZE,
 	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = 0,
+	.bInterfaceNumber = GDB_IF_NO,
 	.bAlternateSetting = 0,
 	.bNumEndpoints = 1,
 	.bInterfaceClass = USB_CLASS_CDC,
@@ -174,7 +177,7 @@ static const struct usb_endpoint_descriptor uart_comm_endp = {
 	.bEndpointAddress = (CDCACM_UART_ENDPOINT + 1) | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
 	.wMaxPacketSize = 16,
-	.bInterval = 255,
+	.bInterval = MAX_BINTERVAL,
 };
 
 static const struct usb_endpoint_descriptor uart_data_endp[] = {
@@ -183,7 +186,11 @@ static const struct usb_endpoint_descriptor uart_data_endp[] = {
 		.bDescriptorType = USB_DT_ENDPOINT,
 		.bEndpointAddress = CDCACM_UART_ENDPOINT,
 		.bmAttributes = USB_ENDPOINT_ATTR_BULK,
+#if defined(USB_HS)
+		.wMaxPacketSize = CDCACM_PACKET_SIZE,
+#else
 		.wMaxPacketSize = CDCACM_PACKET_SIZE / 2,
+#endif
 		.bInterval = 1,
 	},
 	{
@@ -321,7 +328,7 @@ static const struct usb_endpoint_descriptor trace_endp = {
 	.bDescriptorType = USB_DT_ENDPOINT,
 	.bEndpointAddress = TRACE_ENDPOINT | USB_REQ_TYPE_IN,
 	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
-	.wMaxPacketSize = 64,
+	.wMaxPacketSize = TRACE_ENDPOINT_SIZE,
 	.bInterval = 0,
 };
 
@@ -348,6 +355,110 @@ static const struct usb_iface_assoc_descriptor trace_assoc = {
 	.bFunctionSubClass = 0xFF,
 	.bFunctionProtocol = 0xFF,
 	.iFunction = 7,
+};
+#endif
+#if defined(PLATFORM_HAS_SLCAN)
+/*SLCAN interface */
+static const struct usb_endpoint_descriptor slcan_comm_endp[] = {{
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = (CDCACM_SLCAN_ENDPOINT + 1) | USB_REQ_TYPE_IN,
+	.bmAttributes = USB_ENDPOINT_ATTR_INTERRUPT,
+	.wMaxPacketSize = 16,
+	.bInterval =  MAX_BINTERVAL,
+}};
+
+static const struct usb_endpoint_descriptor slcan_data_endp[] = {{
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = CDCACM_SLCAN_ENDPOINT,
+	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
+	.wMaxPacketSize = CDCACM_PACKET_SIZE,
+	.bInterval = 1,
+}, {
+	.bLength = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType = USB_DT_ENDPOINT,
+	.bEndpointAddress = CDCACM_SLCAN_ENDPOINT | USB_REQ_TYPE_IN,
+	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
+	.wMaxPacketSize = CDCACM_PACKET_SIZE,
+	.bInterval = 1,
+}};
+
+static const struct {
+	struct usb_cdc_header_descriptor header;
+	struct usb_cdc_call_management_descriptor call_mgmt;
+	struct usb_cdc_acm_descriptor acm;
+	struct usb_cdc_union_descriptor cdc_union;
+} __attribute__((packed)) slcan_cdcacm_functional_descriptors = {
+	.header = {
+		.bFunctionLength = sizeof(struct usb_cdc_header_descriptor),
+		.bDescriptorType = CS_INTERFACE,
+		.bDescriptorSubtype = USB_CDC_TYPE_HEADER,
+		.bcdCDC = 0x0110,
+	},
+	.call_mgmt = {
+		.bFunctionLength =
+			sizeof(struct usb_cdc_call_management_descriptor),
+		.bDescriptorType = CS_INTERFACE,
+		.bDescriptorSubtype = USB_CDC_TYPE_CALL_MANAGEMENT,
+		.bmCapabilities = 0,
+		.bDataInterface = SLCAN_IF_NO + 1,
+	},
+	.acm = {
+		.bFunctionLength = sizeof(struct usb_cdc_acm_descriptor),
+		.bDescriptorType = CS_INTERFACE,
+		.bDescriptorSubtype = USB_CDC_TYPE_ACM,
+		.bmCapabilities = 2, /* SET_LINE_CODING supported */
+	},
+	.cdc_union = {
+		.bFunctionLength = sizeof(struct usb_cdc_union_descriptor),
+		.bDescriptorType = CS_INTERFACE,
+		.bDescriptorSubtype = USB_CDC_TYPE_UNION,
+		.bControlInterface = SLCAN_IF_NO,
+		.bSubordinateInterface0 = SLCAN_IF_NO + 1,
+	 }
+};
+
+static const struct usb_interface_descriptor slcan_comm_iface[] = {{
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = SLCAN_IF_NO,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 1,
+	.bInterfaceClass = USB_CLASS_CDC,
+	.bInterfaceSubClass = USB_CDC_SUBCLASS_ACM,
+	.bInterfaceProtocol = USB_CDC_PROTOCOL_NONE,
+	.iInterface = 8,
+
+	.endpoint = slcan_comm_endp,
+
+	.extra = &slcan_cdcacm_functional_descriptors,
+	.extralen = sizeof(slcan_cdcacm_functional_descriptors)
+}};
+
+static const struct usb_interface_descriptor slcan_data_iface[] = {{
+	.bLength = USB_DT_INTERFACE_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE,
+	.bInterfaceNumber = SLCAN_IF_NO + 1,
+	.bAlternateSetting = 0,
+	.bNumEndpoints = 2,
+	.bInterfaceClass = USB_CLASS_DATA,
+	.bInterfaceSubClass = 0,
+	.bInterfaceProtocol = 0,
+	.iInterface = 8,
+
+	.endpoint = slcan_data_endp,
+}};
+
+static const struct usb_iface_assoc_descriptor slcan_assoc = {
+	.bLength = USB_DT_INTERFACE_ASSOCIATION_SIZE,
+	.bDescriptorType = USB_DT_INTERFACE_ASSOCIATION,
+	.bFirstInterface = SLCAN_IF_NO,
+	.bInterfaceCount = 2,
+	.bFunctionClass = USB_CLASS_CDC,
+	.bFunctionSubClass = USB_CDC_SUBCLASS_ACM,
+	.bFunctionProtocol = USB_CDC_PROTOCOL_NONE,
+	.iFunction = 8,
 };
 #endif
 
@@ -384,6 +495,17 @@ static const struct usb_interface ifaces[] = {
 		.altsetting = &trace_iface,
 	},
 #endif
+#if defined(PLATFORM_HAS_SLCAN)
+	{
+		.num_altsetting = 1,
+		.iface_assoc = &slcan_assoc,
+		.altsetting = slcan_comm_iface,
+	},
+	{
+		.num_altsetting = 1,
+		.altsetting = slcan_data_iface,
+	}
+#endif
 };
 
 static const struct usb_config_descriptor config = {
@@ -394,7 +516,7 @@ static const struct usb_config_descriptor config = {
 	.bConfigurationValue = 1,
 	.iConfiguration = 0,
 	.bmAttributes = 0x80,
-	.bMaxPower = 0x32,
+	.bMaxPower = 250,
 
 	.interface = ifaces,
 };
@@ -408,6 +530,9 @@ static const char *const usb_strings[] = {
 	"Black Magic DFU",
 #if defined(PLATFORM_HAS_TRACESWO)
 	"Black Magic Trace Capture",
+#endif
+#if defined(PLATFORM_HAS_SLCAN)
+	"Black Magic SLCAN",
 #endif
 };
 

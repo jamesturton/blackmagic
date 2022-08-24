@@ -1,8 +1,7 @@
 /*
- * This file is part of the Black Magic Debug project.
+ * This file is part of the libopenstm32 project.
  *
- * Copyright (C) 2011  Black Sphere Technologies Ltd.
- * Written by Gareth McMullin <gareth@blacksphere.co.nz>
+ * Copyright (C) 2010 Thomas Otto <tommi@viadmin.org>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef INCLUDE_CRC32_H
-#define INCLUDE_CRC32_H
+/* Define memory regions. */
+MEMORY
+{
+	rom (rx) : ORIGIN = 0x08000000, LENGTH =  512K
+	ram (rwx) : ORIGIN = 0x20000000, LENGTH = 256K
+}
 
-int generic_crc32(target *t, uint32_t *crc, uint32_t base, int len);
-void crc32_init(void);
-
-#endif /* INCLUDE_CRC32_H */
+/* Include the common ld script from libopenstm32. */
+INCLUDE cortex-m-generic.ld

@@ -34,7 +34,7 @@ static uint32_t count_in;
 static uint32_t out_ptr;
 static uint8_t buffer_out[CDCACM_PACKET_SIZE];
 static uint8_t buffer_in[CDCACM_PACKET_SIZE];
-#ifdef STM32F4
+#if defined(STM32F4) || defined(STM32F7)
 static volatile uint32_t count_new;
 static uint8_t double_buffer_out[CDCACM_PACKET_SIZE];
 #endif
@@ -67,7 +67,7 @@ void gdb_if_putchar(unsigned char c, int flush)
 	}
 }
 
-#ifdef STM32F4
+#if defined(STM32F4) || defined(STM32F7)
 void gdb_usb_out_cb(usbd_device *dev, uint8_t ep)
 {
 	(void)ep;
@@ -83,7 +83,7 @@ void gdb_usb_out_cb(usbd_device *dev, uint8_t ep)
 static void gdb_if_update_buf(void)
 {
 	while (usb_get_config() != 1);
-#ifdef STM32F4
+#if defined(STM32F4) || defined(STM32F7)
 	__asm__ volatile("cpsid i; isb");
 	if (count_new) {
 		memcpy(buffer_out, double_buffer_out, count_new);
