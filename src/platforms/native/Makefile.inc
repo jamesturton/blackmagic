@@ -4,7 +4,7 @@ OBJCOPY = $(CROSS_COMPILE)objcopy
 
 CFLAGS += -Istm32/include -mcpu=cortex-m3 -mthumb \
 	-DSTM32F1 -DBLACKMAGIC -I../libopencm3/include \
-	-Iplatforms/stm32 -DDFU_SERIAL_LENGTH=9
+	-Iplatforms/stm32 -DDFU_SERIAL_LENGTH=9 -Iplatforms/stm32/uf2
 
 LDFLAGS_BOOT := $(LDFLAGS) --specs=nano.specs -lopencm3_stm32f1 \
 	-Wl,-T,platforms/stm32/blackmagic.ld -nostartfiles -lc \
@@ -19,6 +19,7 @@ LDFLAGS += --specs=nosys.specs
 endif
 
 VPATH += platforms/stm32
+VPATH += platforms/stm32/uf2
 
 SRC +=               \
 	traceswodecode.c \
@@ -27,11 +28,15 @@ SRC +=               \
 	timing.c	\
 	timing_stm32.c	\
 
-all:	blackmagic.bin blackmagic_dfu.bin blackmagic_dfu.hex
+all:	blackmagic.bin blackmagic_dfu.bin blackmagic_dfu.hex blackmagic_uf2.bin blackmagic_uf2.hex
 
 blackmagic_dfu.elf: usbdfu.o dfucore.o dfu_f1.o serialno.o
 	@echo "  LD      $@"
 	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
 
+blackmagic_uf2.elf: usbuf2.o dapboot.o dmesg.o dummy.o ghostfat.o usb_conf.o usb_msc.o webusb.o winusb.o
+	@echo "  LD      $@"
+	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
+
 host_clean:
-	-$(Q)$(RM) blackmagic.bin blackmagic_dfu blackmagic_dfu.bin blackmagic_dfu.hex
+	-$(Q)$(RM) blackmagic.bin blackmagic_dfu blackmagic_dfu.bin blackmagic_dfu.hex blackmagic_uf2 blackmagic_uf2.bin blackmagic_uf2.hex
