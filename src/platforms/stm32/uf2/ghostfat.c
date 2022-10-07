@@ -3,8 +3,8 @@
 
 #include <string.h>
 #include "target.h"
-#include "dmesg.h"
 #include "version.h"
+#include "platform.h"
 
 typedef struct {
     uint8_t JumpInstruction[3];
@@ -49,9 +49,6 @@ static size_t flashSize(void) {
     return FLASH_SIZE_OVERRIDE;
 }
 
-//#define DBG NOOP
-#define DBG DMESG
-
 struct TextFile {
     const char name[11];
     const char *content;
@@ -62,9 +59,7 @@ struct TextFile {
 #define STR0(x) #x
 #define STR(x) STR0(x)
 const char infoUf2File[] = //
-    "UF2 Bootloader " FIRMWARE_VERSION "\r\n"
-    "Model: " PRODUCT_NAME "\r\n"
-    "Board-ID: " BOARD_ID "\r\n";
+    "Black Magic Probe UF2 " PLATFORM_IDENT "" FIRMWARE_VERSION "\r\n";
 
 const char indexFile[] = //
     "<!doctype html>\n"
@@ -137,10 +132,7 @@ static void flushFlash(void) {
         // disable bootloader or something
     }
 
-    DBG("Flush at %x", flashAddr);
     if (memcmp(flashBuf, (void *)flashAddr, FLASH_PAGE_SIZE) != 0) {
-        DBG("Write flush at %x", flashAddr);
-
         target_flash_unlock();
         bool ok = target_flash_program_array((void *)flashAddr, (void*)flashBuf, FLASH_PAGE_SIZE / 2);
         target_flash_lock();
@@ -170,12 +162,6 @@ static void uf2_timer_start(int delay) {
 // called roughly every 1ms
 void ghostfat_1ms() {
     ms++;
-
-    if (resetTime && ms >= resetTime) {
-        flushFlash();
-        target_manifest_app();
-        while (1);
-    }
 
     if (lastFlush && ms - lastFlush > 100) {
         flushFlash();
@@ -260,20 +246,16 @@ static void write_block_core(uint32_t block_no, const uint8_t *data, bool quiet,
 
     (void)block_no;
 
-    // DBG("Write magic: %x", bl->magicStart0);
-
     if (!is_uf2_block(bl) || !UF2_IS_MY_FAMILY(bl)) {
         return;
     }
 
     if ((bl->flags & UF2_FLAG_NOFLASH) || bl->payloadSize > 256 || (bl->targetAddr & 0xff) ||
         bl->targetAddr < USER_FLASH_START || bl->targetAddr + bl->payloadSize > USER_FLASH_END) {
-        DBG("Skip block at %x", bl->targetAddr);
         // this happens when we're trying to re-flash CURRENT.UF2 file previously
         // copied from a device; we still want to count these blocks to reset properly
     } else {
         // logval("write block at", bl->targetAddr);
-        DBG("Write block at %x", bl->targetAddr);
         flash_write(bl->targetAddr, bl->data, bl->payloadSize);
     }
 
@@ -303,7 +285,6 @@ static void write_block_core(uint32_t block_no, const uint8_t *data, bool quiet,
                 }
             }
         }
-        //DBG("wr %d=%d (of %d)", state->numWritten, bl->blockNo, bl->numBlocks);
     }
 
     if (!isSet && !quiet) {

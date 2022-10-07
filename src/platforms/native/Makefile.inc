@@ -34,9 +34,17 @@ blackmagic_dfu.elf: usbdfu.o dfucore.o dfu_f1.o serialno.o
 	@echo "  LD      $@"
 	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
 
-blackmagic_uf2.elf: usbuf2.o dapboot.o dmesg.o dummy.o ghostfat.o usb_conf.o usb_msc.o webusb.o winusb.o
+blackmagic.dfu: blackmagic.hex
+	@echo Creating $@
+	@python3 ../scripts/dfu-convert.py -i $< $@
+
+blackmagic_uf2.elf: usbuf2.o dapboot.o ghostfat.o usb_conf.o usb_msc.o webusb.o winusb.o serialno.o
 	@echo "  LD      $@"
 	$(Q)$(CC) $^ -o $@ $(LDFLAGS_BOOT)
 
+blackmagic.uf2: blackmagic.hex
+	@echo Creating $@
+	@python3 ../scripts/uf2-convert.py -o $@ $<
+
 host_clean:
-	-$(Q)$(RM) blackmagic.bin blackmagic_dfu blackmagic_dfu.bin blackmagic_dfu.hex blackmagic_uf2 blackmagic_uf2.bin blackmagic_uf2.hex
+	-$(Q)$(RM) blackmagic.bin blackmagic.dfu blackmagic.uf2 blackmagic_dfu.bin blackmagic_dfu.hex blackmagic_uf2 blackmagic_uf2.bin blackmagic_uf2.hex

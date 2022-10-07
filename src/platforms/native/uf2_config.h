@@ -22,8 +22,10 @@
 #define APP_BASE_ADDRESS 0x08002000
 #define FLASH_SIZE_OVERRIDE 0x20000
 #define FLASH_PAGE_SIZE  1024
-#define DFU_UPLOAD_AVAILABLE 1
-#define DFU_DOWNLOAD_AVAILABLE 1
+
+#define INDEX_URL "https://black-magic.org/"
+#define UF2_NUM_BLOCKS 8000
+#define VOLUME_LABEL "BMP"
 
 #define UF2_FAMILY 0x5ee21072
 

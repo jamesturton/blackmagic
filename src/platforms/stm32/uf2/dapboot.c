@@ -47,9 +47,6 @@ static void jump_to_application(void) {
     /* Use the application's vector table */
     target_relocate_vector_table();
 
-    /* Do any necessary early setup for the application */
-    target_pre_main();
-
     /* Initialize the application's stack pointer */
     __set_MSP((uint32_t)(app_vector_table->initial_sp_value));
 
@@ -68,8 +65,6 @@ uint32_t msTimer;
 extern int msc_started;
 
 int main(void) {
-    bool appValid = validate_application();
-
     if (!target_get_force_bootloader())
         jump_to_application_if_valid();
 
@@ -79,17 +74,10 @@ int main(void) {
     /* Initialize GPIO/LEDs if needed */
     target_gpio_setup();
 
-    /* Setup USB */
-    {
-        char serial[USB_SERIAL_NUM_LENGTH+1];
-        serial[0] = '\0';
-        target_get_serial_number(serial, USB_SERIAL_NUM_LENGTH);
-        usb_set_serial_number(serial);
-    }
+    usb_set_serial_number();
 
     usbd_device* usbd_dev = usb_setup();
-    //dfu_setup(usbd_dev, &target_manifest_app, NULL, NULL);
-    usb_msc_init(usbd_dev, 0x82, 64, 0x01, 64, "Example Ltd", "UF2 Bootloader",
+    usb_msc_init(usbd_dev, 0x82, 64, 0x01, 64, "BMP", "UF2 Bootloader",
         "42.00", UF2_NUM_BLOCKS, read_block, write_block);
     winusb_setup(usbd_dev);
 
@@ -112,14 +100,7 @@ int main(void) {
             else if (br < 10)
                 d = 2;
 
-            //int v = msTimer % 500;
-            //target_set_led(v < 50);
-
             ghostfat_1ms();
-
-            if (appValid && !msc_started && msTimer > 3000) {
-                target_manifest_app();
-            }
         }
 
         usbd_poll(usbd_dev);

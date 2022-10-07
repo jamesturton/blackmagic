@@ -22,6 +22,9 @@
 
 #include "target.h"
 #include "webusb.h"
+#include "serialno.h"
+#include "platform.h"
+#include "version.h"
 
 #include <libopencm3/usb/msc.h>
 #include <libopencm3/usb/bos.h>
@@ -60,34 +63,34 @@ static const struct usb_interface_descriptor dfu_iface = {
 };
 
 static const struct usb_endpoint_descriptor msc_endp[] = {{
-	.bLength = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = 0x01,
-	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
-	.wMaxPacketSize = 64,
-	.bInterval = 0,
+    .bLength = USB_DT_ENDPOINT_SIZE,
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress = 0x01,
+    .bmAttributes = USB_ENDPOINT_ATTR_BULK,
+    .wMaxPacketSize = 64,
+    .bInterval = 0,
 }, {
-	.bLength = USB_DT_ENDPOINT_SIZE,
-	.bDescriptorType = USB_DT_ENDPOINT,
-	.bEndpointAddress = 0x82,
-	.bmAttributes = USB_ENDPOINT_ATTR_BULK,
-	.wMaxPacketSize = 64,
-	.bInterval = 0,
+    .bLength = USB_DT_ENDPOINT_SIZE,
+    .bDescriptorType = USB_DT_ENDPOINT,
+    .bEndpointAddress = 0x82,
+    .bmAttributes = USB_ENDPOINT_ATTR_BULK,
+    .wMaxPacketSize = 64,
+    .bInterval = 0,
 }};
 
 static const struct usb_interface_descriptor msc_iface = {
-	.bLength = USB_DT_INTERFACE_SIZE,
-	.bDescriptorType = USB_DT_INTERFACE,
-	.bInterfaceNumber = INTF_MSC,
-	.bAlternateSetting = 0,
-	.bNumEndpoints = 2,
-	.bInterfaceClass = USB_CLASS_MSC,
-	.bInterfaceSubClass = USB_MSC_SUBCLASS_SCSI,
-	.bInterfaceProtocol = USB_MSC_PROTOCOL_BBB,
-	.iInterface = 0,
-	.endpoint = msc_endp,
-	.extra = NULL,
-	.extralen = 0
+    .bLength = USB_DT_INTERFACE_SIZE,
+    .bDescriptorType = USB_DT_INTERFACE,
+    .bInterfaceNumber = INTF_MSC,
+    .bAlternateSetting = 0,
+    .bNumEndpoints = 2,
+    .bInterfaceClass = USB_CLASS_MSC,
+    .bInterfaceSubClass = USB_MSC_SUBCLASS_SCSI,
+    .bInterfaceProtocol = USB_MSC_PROTOCOL_BBB,
+    .iInterface = 0,
+    .endpoint = msc_endp,
+    .extra = NULL,
+    .extralen = 0
 };
 
 static const struct usb_interface interfaces[] = {
@@ -127,24 +130,18 @@ static const struct usb_bos_descriptor bos = {
     .device_capability_descriptors = &capabilities
 };
 
-static char serial_number[USB_SERIAL_NUM_LENGTH+1];
-
 static const char *usb_strings[] = {
-    "Devanarchy",
-    "DAPBoot DFU Bootloader",
-    serial_number,
-    "DAPBoot DFU"
+    "Black Magic Debug",
+    "Black Magic Probe UF2 " PLATFORM_IDENT  "" FIRMWARE_VERSION,
+    serial_no,
+    "Black Magic Probe UF2"
 };
 
 /* Buffer to be used for control requests. */
 static uint8_t usbd_control_buffer[USB_CONTROL_BUF_SIZE] __attribute__ ((aligned (2)));
 
-void usb_set_serial_number(const char* serial) {
-    serial_number[0] = '\0';
-    if (serial) {
-        strncpy(serial_number, serial, USB_SERIAL_NUM_LENGTH);
-        serial_number[USB_SERIAL_NUM_LENGTH] = '\0';
-    }
+void usb_set_serial_number() {
+    read_serial_number();
 }
 
 usbd_device* usb_setup(void) {

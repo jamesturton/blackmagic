@@ -79,10 +79,6 @@ bool target_get_force_bootloader(void) {
     return true;
 }
 
-void target_get_serial_number(char* dest, size_t max_chars) {
-    desig_get_unique_id_as_string(dest, max_chars+1);
-}
-
 static uint16_t* get_flash_end(void) {
 #ifdef FLASH_SIZE_OVERRIDE
     /* Allow access to the unofficial full 128KiB flash size */
