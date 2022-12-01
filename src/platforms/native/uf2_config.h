@@ -19,13 +19,15 @@
 #ifndef CONFIG_H_INCLUDED
 #define CONFIG_H_INCLUDED
 
-#define APP_BASE_ADDRESS 0x08002000
+#define APP_BASE_ADDRESS 0x08003000
 #define FLASH_SIZE_OVERRIDE 0x20000
 #define FLASH_PAGE_SIZE  1024
 
 #define INDEX_URL "https://black-magic.org/"
 #define UF2_NUM_BLOCKS 8000
 #define VOLUME_LABEL "BMP"
+#define PRODUCT_NAME "STM32 Board"
+#define BOARD_ID "STM32F103-generic-v0"
 
 #define UF2_FAMILY 0x5ee21072
 

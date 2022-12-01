@@ -59,7 +59,9 @@ struct TextFile {
 #define STR0(x) #x
 #define STR(x) STR0(x)
 const char infoUf2File[] = //
-    "Black Magic Probe UF2 " PLATFORM_IDENT "" FIRMWARE_VERSION "\r\n";
+    "Black Magic Probe UF2 " PLATFORM_IDENT "" FIRMWARE_VERSION "\r\n"
+    "Model: " PRODUCT_NAME "\r\n"
+    "Board-ID: " BOARD_ID "\r\n";
 
 const char indexFile[] = //
     "<!doctype html>\n"
@@ -74,7 +76,6 @@ const char indexFile[] = //
 static const struct TextFile info[] = {
     {.name = "INFO_UF2TXT", .content = infoUf2File},
     {.name = "INDEX   HTM", .content = indexFile},
-    {.name = "CURRENT UF2"},
 };
 #define NUM_INFO (int)(sizeof(info) / sizeof(info[0]))
 
@@ -219,22 +220,8 @@ int read_block(uint32_t block_no, uint8_t *data) {
         }
     } else {
         sectionIdx -= START_CLUSTERS;
-        if (sectionIdx < NUM_INFO - 1) {
+        if (sectionIdx < NUM_INFO) {
             memcpy(data, info[sectionIdx].content, strlen(info[sectionIdx].content));
-        } else {
-            sectionIdx -= NUM_INFO - 1;
-            uint32_t addr = sectionIdx * 256;
-            if (addr < flashSize()) {
-                UF2_Block *bl = (void *)data;
-                bl->magicStart0 = UF2_MAGIC_START0;
-                bl->magicStart1 = UF2_MAGIC_START1;
-                bl->magicEnd = UF2_MAGIC_END;
-                bl->blockNo = sectionIdx;
-                bl->numBlocks = flashSize() / 256;
-                bl->targetAddr = addr | 0x8000000;
-                bl->payloadSize = 256;
-                memcpy(bl->data, (void *)addr, bl->payloadSize);
-            }
         }
     }
 
