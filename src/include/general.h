@@ -57,6 +57,18 @@ extern uint32_t delay_cnt;
 #define BMP_DEBUG_MAX    (1U << 5U)
 #define BMP_DEBUG_STDOUT (1U << 15U)
 
+#if defined(PLATFORM_IDENT)
+#define BOARD_IDENT_DFU "Black Magic Probe DFU (" PLATFORM_IDENT ")"
+#else
+#define BOARD_IDENT_DFU "Black Magic Probe DFU"
+#endif
+
+#if defined(PLATFORM_IDENT)
+#define BOARD_IDENT "Black Magic Probe (" PLATFORM_IDENT ")"
+#else
+#define BOARD_IDENT "Black Magic Probe"
+#endif
+
 #define FREQ_FIXED 0xffffffffU
 
 #if PC_HOSTED == 0

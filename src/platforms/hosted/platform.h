@@ -40,7 +40,7 @@
 char *platform_ident(void);
 void platform_buffer_flush(void);
 
-#define PLATFORM_IDENT "(Black Magic Debug App) "
+#define PLATFORM_IDENT "Black Magic Debug App"
 #define SET_IDLE_STATE(x)
 #define SET_RUN_STATE(x)
 #define PLATFORM_HAS_POWER_SWITCH

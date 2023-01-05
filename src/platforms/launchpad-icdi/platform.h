@@ -24,7 +24,7 @@
 #include "timing.h"
 
 #define PLATFORM_HAS_USBUART
-#define PLATFORM_IDENT "(Launchpad ICDI) "
+#define PLATFORM_IDENT "Launchpad ICDI"
 
 extern uint8_t running_status;
 extern uint32_t swd_delay_cnt;

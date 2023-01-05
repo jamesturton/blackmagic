@@ -309,11 +309,8 @@ static void remote_packet_process_general(unsigned i, char *packet)
 #endif
 		break;
 
-#if !defined(BOARD_IDENT) && defined(BOARD_IDENT)
-#define PLATFORM_IDENT() BOARD_IDENT
-#endif
 	case REMOTE_START:
-		remote_respond_string(REMOTE_RESP_OK, PLATFORM_IDENT "" FIRMWARE_VERSION);
+		remote_respond_string(REMOTE_RESP_OK, BOARD_IDENT " " FIRMWARE_VERSION);
 		break;
 
 	case REMOTE_TARGET_CLK_OE:

@@ -31,7 +31,7 @@
 #include <setjmp.h>
 
 #define PLATFORM_HAS_TRACESWO
-#define PLATFORM_IDENT "(Carbon)"
+#define PLATFORM_IDENT "Carbon"
 
 /*
  * Important pin mappings for Carbon implementation:

@@ -30,7 +30,7 @@
 
 #define PLATFORM_HAS_TRACESWO
 
-#define PLATFORM_IDENT "(F072-IF) "
+#define PLATFORM_IDENT "F072-IF"
 
 /*
  * Important pin mappings for STM32 implementation:

@@ -155,8 +155,6 @@ int command_process(target_s *t, char *cmd)
 	return target_command(t, argc, argv);
 }
 
-#define BOARD_IDENT "Black Magic Probe" PLATFORM_IDENT FIRMWARE_VERSION
-
 bool cmd_version(target_s *t, int argc, const char **argv)
 {
 	(void)t;
@@ -168,7 +166,10 @@ bool cmd_version(target_s *t, int argc, const char **argv)
 	DEBUG_WARN("%s\n", ident);
 #else
 	gdb_out(BOARD_IDENT);
-	gdb_outf(", Hardware Version %d\n", platform_hwversion());
+#if defined(PLATFORM_HAS_HWVERSION)
+	gdb_outf(", Hardware Version %d", platform_hwversion());
+#endif
+	gdb_out(", " FIRMWARE_VERSION "\n");
 	gdb_out("Copyright (C) 2022 Black Magic Debug Project\n");
 	gdb_out("License GPLv3+: GNU GPL version 3 or later "
 			"<http://gnu.org/licenses/gpl.html>\n\n");

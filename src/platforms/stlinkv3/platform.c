@@ -39,7 +39,6 @@
 #include <libopencm3/stm32/syscfg.h>
 
 uint16_t srst_pin;
-static uint32_t hw_version;
 
 #define SCB_CCR_IC_Pos                      17U                                           /*!< SCB CCR: Instruction cache enable bit Position */
 #define SCB_CCR_IC_Msk                     (1UL << SCB_CCR_IC_Pos)                        /*!< SCB CCR: Instruction cache enable bit Mask */
@@ -112,11 +111,6 @@ static void SCB_EnableDCache (void)
 
 	__DSB();
 	__ISB();
-}
-
-int platform_hwversion(void)
-{
-	return hw_version;
 }
 
 void platform_nrst_set_val(bool assert)

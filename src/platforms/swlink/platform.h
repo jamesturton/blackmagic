@@ -34,7 +34,8 @@ extern bool debug_bmp;
 #endif
 
 #define PLATFORM_HAS_USBUART
-#define PLATFORM_IDENT "(SWLINK) "
+#define PLATFORM_HAS_HWVERSION
+#define PLATFORM_IDENT "SWLINK"
 
 /* Hardware definitions... */
 #define TMS_PORT  GPIOA

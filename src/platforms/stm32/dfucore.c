@@ -132,14 +132,12 @@ const usb_config_descriptor_s config = {
 	.interface = ifaces,
 };
 
-#define BOARD_IDENT_DFU(BOARD_TYPE) "Black Magic Probe DFU " PLATFORM_IDENT "" FIRMWARE_VERSION
-
 /* Because of shenanigans below, this intentionally creates a runtime copy of the string. */
 static char if_string[] = DFU_IFACE_STRING;
 
 static const char *const usb_strings[] = {
 	"Black Magic Debug",
-	BOARD_IDENT_DFU(PLATFORM_IDENT),
+	BOARD_IDENT_DFU " " FIRMWARE_VERSION,
 	serial_no,
 	/* This string is used by ST Microelectronics' DfuSe utility */
 	if_string,

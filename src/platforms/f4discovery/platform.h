@@ -30,7 +30,7 @@
 #include <setjmp.h>
 
 #define PLATFORM_HAS_TRACESWO
-#define PLATFORM_IDENT "(F4Discovery) "
+#define PLATFORM_IDENT "F4Discovery"
 
 /*
  * Important pin mappings for STM32 implementation:

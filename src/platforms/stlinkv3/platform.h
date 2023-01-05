@@ -38,7 +38,7 @@ extern bool debug_bmp;
 #endif
 
 #define PLATFORM_HAS_USBUART
-#define PLATFORM_IDENT    "STLINK-V3 "
+#define PLATFORM_IDENT "STLINK-V3"
 
 #define BOOTMAGIC0 0xb007da7a
 #define BOOTMAGIC1 0xbaadfeed
@@ -190,6 +190,9 @@ extern const struct _usbd_driver stm32f723_usb_driver;
 #define SET_IDLE_STATE(state)	{gpio_set_val(LED_PORT, LED_IDLE_RUN, !state);}
 #define SET_ERROR_STATE(state)
 
-extern uint32_t detect_rev(void);
+static inline int platform_hwversion(void)
+{
+	return 0;
+}
 
 #endif /* PLATFORMS_STLINKV3_PLATFORM_H */

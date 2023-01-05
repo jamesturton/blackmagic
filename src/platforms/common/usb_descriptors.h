@@ -27,10 +27,7 @@
 
 #include "usb.h"
 #include "serialno.h"
-#include "version.h"
 #include "usb_types.h"
-
-#define BOARD_IDENT "Black Magic Probe " PLATFORM_IDENT FIRMWARE_VERSION
 
 /* Top-level device descriptor */
 static const usb_device_descriptor_s dev_desc = {
